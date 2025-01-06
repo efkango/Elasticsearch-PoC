@@ -69,4 +69,5 @@ PostgreSQL tablosundaki veriler yine Elastic Stack bir tool olan Logstash ile po
 ### ES'in Search Route'a Implementasyonu
 
 Elasticsearch’i mevcut arama routelarına entegre etmek için önce Elasticsearch client’ı projeye eklenmeli ve PostgreSQL query'leri Elasticsearch query formatına dönüştürülürmeli
+
 . Verilerin düzenli olarak Elasticsearch’e indexlenmesi için bir  servisi yazılmalı (kullanılmalı). Sonuçların Elasticsearch üzerinden döneceği yeni bir refactor planlaması ile search endpoint’in performansı optimize edilebilir.
