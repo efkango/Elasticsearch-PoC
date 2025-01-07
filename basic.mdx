@@ -1,0 +1,74 @@
+# What is Elasticsearch?
+Elasticsearch, open source, Apache Lucene tabanlı, NoSQL JSON based yapıda bir database store search engine'dir.
+
+## What is diffrence between elasticsearch with other databases?
+Elasticsearch'i diğer database'lerden ayıran özelliklerden biri full-text search yeteneğinin güçlü olmasıdır. Odağı search engine olduğu için search özellikleri son derece gelişmiştir ve bu onu diğer database'lerden ayırır.
+
+### Relationality
+NoSQL olduğu için relational database'lerin sahip olduğu relation yapısına sahip değildir. Datalar arasında direkt bir ilişki bulunmaz.
+### Structured and Unstructred types search
+Elasticsearch hem structured (datetime, boolean, int gibi) hem de unstructured datalar üzerinde search yapabilme yeteneğine sahiptir.
+Genellikle unstructured data üzerindeki search yetenegi sebebi ile tercih edilmektedir. Structured data için diğer database'ler ile benzer sonuçlar alınabilir.
+
+## Basicly How It Works
+Elasticsearch, datayı inverted index yapısında saklar. Bu yapı sayesinde full-text search işlemlerini çok hızlı gerçekleştirir.
+
+> Inverted index ise asağıda örneklendiği şekilde bir logic'e sahiptir.
+```
+//NORMAL DB'DE DATA BU SEKILDE SAKLANIR
+Document3: "Engine performansı önemlidir"
+
+//İnverted index ise her kelimeyi alıp, hangi document'larda geçtiğini listeler:
+"engine" -> Document1, Document3
+```
+
+# Request Examples
+Elasticsearch, HTTP üzerinden çalışır ve JSON veri gönderilip alınır. RESTFUL
+
+### Dokuman Index
+```json
+POST /my_index/_doc/1
+{
+  "title": "Elasticsearch Introduction",
+  "content": "Elasticsearch is a distributed search engine.",
+  "tags": ["search", "database", "nosql"],
+  "created_at": "2025-01-01"
+}
+```
+
+### Basit full-text search
+
+```json
+GET /my_index/_search
+{
+  "query": {
+    "match": {
+      "content": "distributed search engine"
+    }
+  }
+}
+```
+
+## Architecture
+
+### Node
+Elasticsearch instance'larına verilen isimdir. Her node datanın bir parçasını depolar.
+Bu sayede distributed ve scaleable bir ortam sunar.
+
+### Cluster
+Bir veya daha çok elasticsearch node'unun iletişim halinde çalışması ile ortaya çıkan bir yapıdır. Her node bir cluster'a aittir.
+Single node olsa bile cluster kavramı vardır.
+
+### Shard
+Büyük ölçekli datanın dağıtık mimaride kullanılmasını sağlayan yapıdır. Index datası küçük parçalara bölünerek shard'larda toplanır.
+
+
+# End of the Day
+
+Temelde Elasticsearch, devasa miktarda verinin içinden hızlı ve doğru bir şekilde arama yapabilmeyi sağlayan bir search engine'dir.
+Peki neden böyle bir tool'a ihtiyaç duyuldu? Çünkü  relational database'ler, özellikle full-text search ve unstructured data üzerinde arama yaparken yavaş ve verimsiz hale gelebiliyorlar.
+
+Örneğin, LinkedIn'in karşılaştığı temel zorluk, yüz milyonlarca kullanıcı profilinde karmaşık aramaları hızlı ve etkili bir şekilde gerçekleştirmekti.
+Elasticsearch sayesinde bu problem çözüldü. Artık işe alım uzmanları, saniyeler içinde "Python bilen, 5 yıl deneyimli, İstanbul'da yaşayan" gibi spesifik aramalar yapabiliyor ve doğru adaylara hızla ulaşabiliyor.
+
+Elasticsearch, sadece arama hızını değil, kullanıcı deneyimini de bu şekilde bir üst seviyeye taşıyor.
