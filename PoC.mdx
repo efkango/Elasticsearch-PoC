@@ -69,7 +69,7 @@ if *message.Key != "changed_bio" {
 userID := *message.ID
 bio := *message.Value
 
-_, err = c.mainUser.Exec(ctx, `
+_, err = c.userDB.Exec(ctx, `
     INSERT INTO users_bio_log (user_id, bio, log_date)
     VALUES ($1, $2, now())`, userID, bio)
 if err != nil {
