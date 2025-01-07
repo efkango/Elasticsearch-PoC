@@ -273,5 +273,66 @@ func (p *ProcessBioChange) Process(ctx context.Context, message *connection.Mess
 > Bu kod parçası bio'ların loglandığı yere ait consumer'da yapılabilecek değişiklikleri göstermektedir.
 
 ### Wire
+Belirlenen directory içine consumer interface'i implemente eden bir go dosyası ekleyemeliyiz.
+
+ ```go
+type SendElasticsearchConsumer struct {
+	connection.Consumer
+	Cl          *connection.ConsumerClient
+}
+
+func NewSendElasticsearchConsumer(
+	client *connection.ConsumerClient,
+) *SendElasticsearchConsumer {
+	return &SendElasticsearchConsumer{
+		Cl:          client,
+	}
+}
+
+type JsonMessage struct {
+	EventToken string `json:"event_token"`
+	SendElasticsearch string `json:"send-elasticsearch"`
+	Unix       *int64 `json:"unix"`
+}
+
+func (c *SendElasticsearchConsumer) Init(ctx context.Context) {
+
+}
+func (c *SendElasticsearchConsumer) Process(ctx context.Context, r *kgo.Record) (commit bool) {
+	span := trace.SpanFromContext(ctx)
+	jsonMessage := &JsonMessage{}
+	userID := string(r.Key)
+
+	err := json.Unmarshal(r.Value, &jsonMessage)
+	if err != nil {
+		utilcommon.LogErr(ctx, err)
+		span.RecordError(err)
+		return
+	}
+
+	if userID == "" {
+		utilcommon.LogErr(ctx, err)
+		span.RecordError(err)
+		return
+	}
+
+    if jsonMessage.EventToken == "" {
+    		jsonMessage.EventToken = jsonMessage.SendElasticsearch
+    	}
+
+	err = c.examHandler.SendElasticEvent(ctx, userID, map[string]interface{}{"event_token": jsonMessage.EventToken}, jsonMessage.Unix)
+	if err != nil {
+		utilcommon.LogErr(ctx, err)
+	}
+	return true
+}
+ ```
 
 
+> Oluşturulan consumer, Consumer map'e "topic-ismi:grup-ismi" keyiyle ve oluşturduğumuz go dosyasındaki structu initialize eden fonksiyona dependency inject eden wire fonksiyonunun value'su ile eklenmeli.
+
+```go
+map[string]interface{}{
+    "send-elasticsearch:process-send-elasticsearch": sendElasticsearchProcessSendElasticsearch
+}
+```
