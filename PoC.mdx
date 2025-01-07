@@ -61,6 +61,41 @@ user_id (TEXT)
 bio (TEXT)
 log_date (TIMESTAMPT)
 
+```go
+if *message.Key != "user_bio_changed" {
+    return true
+}
+
+userID := *message.MakroId
+bio := *message.Value
+
+_, err = c.mainUser.Exec(ctx, `
+    INSERT INTO users_bio_log (user_id, bio, log_date)
+    VALUES ($1, $2, now())`, userID, bio)
+if err != nil {
+    utilcommon.LogErr(ctx, err)
+    return false
+}
+
+// Logları elasticsearch'e insert etme, dataları ES'e yolladığımızda oluşturduğu cluster içindeki node'larda tutuyor
+log := map[string]interface{}{
+    "user_id":  userID,
+    "bio":      bio,
+    "log_date": time.Now().Format(time.RFC3339),
+}
+
+_, err = c.elasticClient.Index().
+    Index("user_bio_logs").
+    BodyJson(log).
+    Do(ctx)
+if err != nil {
+    utilcommon.LogErr(ctx, err)
+    return false
+}
+
+return true
+```
+
 ### Veri Aktarım Süreci
 Burada postgreSQL'de bulunan dataların aktarıldığını düşündüğümüz bir senaryo üzerinden ilerliyoruz. Alternatif olarak, Kafka üzerinden gelen biyografi değişim logları doğrudan Elasticsearch’e aktarılabilir.\
 Veya bir ETL (Extract, Transform, Load) script yazarak periyoduk olarak ES'e ekleyebiliriz
