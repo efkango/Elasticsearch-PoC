@@ -62,11 +62,11 @@ bio (TEXT)
 log_date (TIMESTAMPT)
 
 ```go
-if *message.Key != "user_bio_changed" {
+if *message.Key != "changed_bio" {
     return true
 }
 
-userID := *message.MakroId
+userID := *message.ID
 bio := *message.Value
 
 _, err = c.mainUser.Exec(ctx, `
@@ -85,7 +85,7 @@ log := map[string]interface{}{
 }
 
 _, err = c.elasticClient.Index().
-    Index("user_bio_logs").
+    Index("changed_bio").
     BodyJson(log).
     Do(ctx)
 if err != nil {
