@@ -101,6 +101,39 @@ Burada postgreSQL'de bulunan dataların aktarıldığını düşündüğümüz b
 Veya bir ETL (Extract, Transform, Load) script yazarak periyoduk olarak ES'e ekleyebiliriz
 PostgreSQL tablosundaki veriler yine Elastic Stack bir tool olan Logstash ile postgresql'den datayı çekip elasticsearch'e aktarmak için kullanılabilir.
 
+> Elasticsearch'e ait logstash ile data transfer örneği
+```conf
+input {
+  jdbc {
+    jdbc_driver_library => "/path/to/postgresql.jar"  # PostgreSQL driver
+    jdbc_driver_class => "org.postgresql.Driver"
+    jdbc_connection_string => "jdbc:postgresql://localhost:5432/your_database"
+    jdbc_user => "your_username"
+    jdbc_password => "your_password"
+    schedule => "* * * * *"  # Her dakika çalıştır
+    statement => "SELECT user_id, bio, log_date FROM users_bio_log WHERE log_date > now() - interval '1 day'"
+  }
+}
+
+filter {
+  mutate {
+    rename => { "log_date" => "@timestamp" } # log_date alanını Elasticsearch'ün zaman tipi olan @timestamp ile eşleştirir.
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "user_bio_logs" # gönderilecek index
+    document_id => "%{user_id}-%{log_date}" # Her kayda benzersiz bir document_id tanımlanır
+  }
+
+  stdout {
+    codec => rubydebug  # Debug amaçlı output
+  }
+}
+```
+
 ### ES'in Search Route'a Implementasyonu
 
 Elasticsearch’i mevcut arama routelarına entegre etmek için önce Elasticsearch client’ı projeye eklenmeli ve PostgreSQL query'leri Elasticsearch query formatına dönüştürülürmeli
