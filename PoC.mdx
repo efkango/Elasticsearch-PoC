@@ -190,3 +190,28 @@ return func(c *fiber.Ctx) error {
 
 . Verilerin düzenli olarak Elasticsearch’e indexlenmesi için bir  servisi yazılmalı (kullanılmalı). Sonuçların Elasticsearch üzerinden döneceği yeni bir refactor planlaması ile search endpoint’in performansı optimize edilebilir.
 
+> ES Server Instance olusturma
+```go
+package services
+
+import (
+	"log"
+
+	"github.com/elastic/go-elasticsearch/v8"
+)
+
+type ElasticsearchService struct {
+	Client *elasticsearch.Client
+}
+
+func NewElasticsearchService() *ElasticsearchService {
+	client, err := elasticsearch.NewDefaultClient()
+	if err != nil {
+		log.Fatalf("Error creating Elasticsearch client: %s", err)
+	}
+
+	return &ElasticsearchService{
+		Client: client,
+	}
+}
+```
