@@ -231,3 +231,47 @@ func main() {
 	//Diger kodlar
 }
 ```
+
+### ES Cache Optimization
+Mevcut consumer'ı modifiye ederek Redis cache ekleyelebiliriz.
+
+Mevcut bio değişikliği consumer'ında PostgreSQL'e insert yapılırken, aynı anda Redis'e de bu bio'yu cache'leyebiliriz. Böylece search requestleri geldiğinde önce Redis'e bakıp, eğer yoksa Elasticsearch'ten arama yapabiliriz.
+```go
+type ProcessBioChange struct {
+    mainUser *sql.DB
+    redis    *redis.Client
+    connection connection.Connection
+}
+
+func (p *ProcessBioChange) Process(ctx context.Context, message *connection.Message) bool {
+    if *message.Key != "user_bio_changed" {
+        return true
+    }
+
+    userID := *message.MakroId
+    bio := *message.Value
+
+    // PostgreSQL insert (mevcut)
+    _, err := p.mainUser.Exec(ctx, `
+        INSERT INTO users_bio_log (user_id, bio, log_date)
+        VALUES ($1, $2, now())`, userID, bio)
+    if err != nil {
+        utilcommon.LogErr(ctx, err)
+        return false
+    }
+
+    // Redis cache ekleme
+    cacheKey := fmt.Sprintf("user:bio:%s", userID)
+    err = p.redis.Set(ctx, cacheKey, bio, 24*time.Hour).Err()
+    if err != nil {
+        utilcommon.LogErr(ctx, err)
+        // Redis hatası olsa bile devam et
+    }
+
+    return true
+```
+Bu kod parçası bio'ların loglandığı yere ait consumer'da yapılabilecek değişiklikleri göstermektedir.
+
+### Wire
+
+
