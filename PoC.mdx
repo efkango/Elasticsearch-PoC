@@ -138,5 +138,55 @@ output {
 
 Elasticsearch’i mevcut arama routelarına entegre etmek için önce Elasticsearch client’ı projeye eklenmeli ve PostgreSQL query'leri Elasticsearch query formatına dönüştürülürmeli
 
+> Basit route implementasyonu
+```go
+return func(c *fiber.Ctx) error {
+		term := c.Query("term")
+		if len(term) < 3 {
+			return util.ReturnErrorMessage(c, 400, "Bad request.")
+		}
+
+		ctx := util.FromCtx(c)
+		resp := Response{
+			[]modelcommon.UserData{},
+		}
+
+		// Elasticsearch Query
+		esQuery := map[string]interface{}{
+			"query": map[string]interface{}{
+				"match": map[string]interface{}{
+					"name": term,
+				},
+			},
+		}
+    res, err := r.elasticsearchClient.Search(
+    			r.elasticsearchClient.Search.WithContext(ctx),
+    			r.elasticsearchClient.Search.WithIndex("users"),
+    			r.elasticsearchClient.Search.WithBodyString(string(queryJSON)),
+    		)
+    		if err != nil {
+    			return util.ReturnErrorMessage(c, 500, "Elasticsearch search failed.")
+    		}
+    		defer res.Body.Close()
+    	var esResult struct {
+        			Hits struct {
+        				Hits []struct {
+        					Source modelcommon.UserData `json:"_source"`
+        				} `json:"hits"`
+        			} `json:"hits"`
+        		}
+
+        		if err := json.NewDecoder(res.Body).Decode(&esResult); err != nil {
+        			return util.ReturnErrorMessage(c, 500, "Failed to parse Elasticsearch response.")
+        		}
+
+        		for _, hit := range esResult.Hits.Hits {
+        			resp.Items = append(resp.Items, hit.Source)
+        		}
+
+        return c.JSON(resp)
+
+```
+
 . Verilerin düzenli olarak Elasticsearch’e indexlenmesi için bir  servisi yazılmalı (kullanılmalı). Sonuçların Elasticsearch üzerinden döneceği yeni bir refactor planlaması ile search endpoint’in performansı optimize edilebilir.
 
