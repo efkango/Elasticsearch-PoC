@@ -215,3 +215,19 @@ func NewElasticsearchService() *ElasticsearchService {
 	}
 }
 ```
+
+> Main.go'ya ekleyerek servisi başlatma
+
+```go
+func main() {
+	esService := services.NewElasticsearchService()
+
+	res, err := esService.Client.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping Elasticsearch: %s", err)
+	}
+	defer res.Body.Close()
+
+	//Diger kodlar
+}
+```
